@@ -18,6 +18,7 @@ int edm_external_gpio[((EDM_N_EXTERNAL_GPIO) < 10 ? 10 : (EDM_N_EXTERNAL_GPIO))]
 	[7] = -EINVAL,
 	[8] = -EINVAL,
 	[9] = -EINVAL,
+	[10] = -EINVAL,
 };
 EXPORT_SYMBOL_GPL(edm_external_gpio);
 
@@ -35,7 +36,8 @@ EXPORT_SYMBOL_GPL(edm_audio_data);
 
 const char *edm_gpio_pin_name[] = {
 	"pin255", "pin256", "pin257", "pin258", "pin259", 
-	"pin260", "pin261", "pin262", "pin263", "pin264"	
+	"pin260", "pin261", "pin262", "pin263", "pin264",
+	"buzzer_155"	
 };
 
 int __init edm_setup_external_gpio(void) {

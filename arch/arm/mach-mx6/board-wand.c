@@ -450,7 +450,10 @@ static void wand_usbotg_vbus(bool on) {
 
 static __init void wand_init_usb(void) {
         IMX6_SETUP_PAD( GPIO_9__GPIO_1_9 );
-        IMX6_SETUP_PAD( GPIO_1__USBOTG_ID );
+        // Alberto: We need the OTG_ID pin as GPIO, so assigned to
+        // ENET_RX_ER pin (unused)
+	IMX6_SETUP_PAD( ENET_RX_ER__ANATOP_USBOTG_ID );
+        //IMX6_SETUP_PAD( GPIO_1__USBOTG_ID );
         IMX6_SETUP_PAD( EIM_D22__GPIO_3_22 );
         IMX6_SETUP_PAD( EIM_D30__GPIO_3_30 );
         
@@ -463,7 +466,8 @@ static __init void wand_init_usb(void) {
 
 	imx_otg_base = MX6_IO_ADDRESS(MX6Q_USB_OTG_BASE_ADDR);
 	/* GPR1: bit 13 == 1 means GPIO1 is OTG_ID pin */
-	mxc_iomux_set_gpr_register(1, 13, 1, 1);
+	// Alberto: Changed, we ignore this, but we need OTG_ID pin free
+	mxc_iomux_set_gpr_register(1, 13, 1, 0);
 
 	mx6_set_otghost_vbus_func(wand_usbotg_vbus);
 
@@ -855,6 +859,7 @@ static __init void wand_init_external_gpios(void) {
 	IMX6_SETUP_PAD( ENET_RX_ER__GPIO_1_24 ); /* p262 */
 	IMX6_SETUP_PAD( GPIO_19__GPIO_4_5 ); /* p263 */
 	IMX6_SETUP_PAD( SD3_RST__GPIO_7_8 ); /* p264 */
+	IMX6_SETUP_PAD( GPIO_1__GPIO_1_1 ); // p155 BUZZER
         
 	/* GPIO export and setup is in EDM framework, see drivers/edm/edm.c */
 }
@@ -1094,7 +1099,10 @@ static void __init wand_init_edm(void) {
 	edm_external_gpio[7] = IMX_GPIO_NR(1, 24);
 	edm_external_gpio[8] = IMX_GPIO_NR(4, 5);
 	edm_external_gpio[9] = IMX_GPIO_NR(7, 8);
-        
+        edm_external_gpio[10] = IMX_GPIO_NR(1, 1);
+
+        gpio_direction_output(BUZZER, 0);
+
 	edm_i2c[0] = 0;
 	edm_i2c[1] = 1;
 	edm_i2c[2] = 2;

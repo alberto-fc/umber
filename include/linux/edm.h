@@ -6,7 +6,8 @@
 
 /* External GPIOs correspond to pins 255 -- 264, respectively
 */
-#define EDM_N_EXTERNAL_GPIO 10
+//Alberto: Added buzzer pin
+#define EDM_N_EXTERNAL_GPIO 11
 extern int edm_external_gpio[EDM_N_EXTERNAL_GPIO];
 
 /* CPU internal channels for the I2C buses routed to pins
