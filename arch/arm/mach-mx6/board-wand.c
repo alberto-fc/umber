@@ -67,6 +67,8 @@
 #define WAND_WL_HOST_WAKE	IMX_GPIO_NR(1, 29)
 #define WAND_WL_WAKE		IMX_GPIO_NR(1, 30)
 
+#define BUZZER			IMX_GPIO_NR(1, 1)
+
 /* Syntactic sugar for pad configuration */
 #define IMX6_SETUP_PAD(p) \
 	if (cpu_is_mx6q()) \
@@ -167,6 +169,16 @@ static void wand_init_sd(void) {
  *                                                                          
  ****************************************************************************/
 
+static struct i2c_board_info mxc_i2c2_board_info[] = {
+        {
+                I2C_BOARD_INFO("ft5x06-ts", 0x38),
+                .irq = gpio_to_irq(IMX_GPIO_NR(2, 8)),
+        },
+        {
+                I2C_BOARD_INFO("pcf8563", 0x51),
+        },
+};
+
 static struct imxi2c_platform_data wand_i2c_data[] = {
 	{ .bitrate	= 400000, },
 	{ .bitrate	= 100000, },
@@ -208,6 +220,26 @@ static __init void wand_init_uart(void) {
 	imx6q_add_imx_uart(0, NULL);
 }
 
+/****************************************************************************
+ *                                                                          
+ * Initialize external console (UART2)
+ *                                                                          
+ ****************************************************************************/
+ 
+static const struct imxuart_platform_data wand_external_uart_data = {
+	.flags = IMXUART_HAVE_RTSCTS,
+	.dma_req_tx = MX6Q_DMA_REQ_UART2_TX,
+	.dma_req_rx = MX6Q_DMA_REQ_UART2_RX,
+};
+
+static __init void wand_init_external_uart(void) {
+	/* UART2 is on SD4_DAT4-7 */
+	IMX6_SETUP_PAD( SD4_DAT4__UART2_RXD );
+	IMX6_SETUP_PAD( SD4_DAT5__UART2_RTS );
+	IMX6_SETUP_PAD( SD4_DAT6__UART2_CTS );
+	IMX6_SETUP_PAD( SD4_DAT7__UART2_TXD );
+	imx6q_add_imx_uart(1, &wand_external_uart_data);
+}
 
 /****************************************************************************
  *                                                                          
@@ -405,7 +437,14 @@ static __init void wand_init_ethernet(void) {
  *                                                                          
  ****************************************************************************/
 
-static void wand_usbotg_vbus(bool on) { }
+static void wand_usbotg_vbus(bool on) { 
+//	if (on)
+//		pr_info("ON\n");
+//	else
+//		pr_info("OFF\n");
+
+//	gpio_set_value_cansleep(WAND_USB_HOST_PWR_EN, !on);
+}
 
 /* ------------------------------------------------------------------------ */
 
@@ -598,8 +637,8 @@ static void __init wand_init_lcd(void) {
 	IMX6_SETUP_PAD( LVDS0_TX2_P__LDB_LVDS0_TX2 );
 	IMX6_SETUP_PAD( LVDS0_TX3_P__LDB_LVDS0_TX3 );
 
-	gpio_request(IMX_GPIO_NR(2, 8), "lvds0_en");
-	gpio_direction_output(IMX_GPIO_NR(2, 8), 1);
+	//gpio_request(IMX_GPIO_NR(2, 8), "lvds0_en");
+	//gpio_direction_output(IMX_GPIO_NR(2, 8), 1);
         
 	gpio_request(IMX_GPIO_NR(2, 9), "lvds0_blt_ctrl");
 	gpio_direction_output(IMX_GPIO_NR(2, 9), 1);
@@ -1130,6 +1169,7 @@ static void __init wand_board_init(void) {
 	wand_init_edm();
 	wand_init_dma();
 	wand_init_uart();
+	wand_init_external_uart();
 	wand_init_sd();
 	wand_init_i2c();
 	wand_init_audio();
@@ -1138,6 +1178,10 @@ static void __init wand_board_init(void) {
 	wand_init_ipu();
 	wand_init_hdmi();
 	wand_init_lcd();
+
+//FIXME: Change this code from this to a fuction
+	i2c_register_board_info(2, mxc_i2c2_board_info, ARRAY_SIZE(mxc_i2c2_board_info));
+
 	wand_init_wifi();
 	wand_init_bluetooth();
 	wand_init_pm();
