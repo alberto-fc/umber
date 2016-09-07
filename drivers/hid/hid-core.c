@@ -1932,6 +1932,15 @@ static bool hid_ignore(struct hid_device *hdev)
 		    hdev->product <= USB_DEVICE_ID_HANWANG_TABLET_LAST)
 			return true;
 		break;
+        case USB_VENDOR_ID_DWAV:
+                /* These are handled by usbtouchscreen. hdev->type is probably
+                 * HID_TYPE_USBNONE, but we say !HID_TYPE_USBMOUSE to match
+                 * usbtouchscreen. */
+                if ((hdev->product == USB_DEVICE_ID_EGALAX_TOUCHCONTROLLER ||
+                     hdev->product == USB_DEVICE_ID_DWAV_TOUCHCONTROLLER) &&
+                    hdev->type != HID_TYPE_USBMOUSE)
+                        return true;
+                break;
 	}
 
 	if (hdev->type == HID_TYPE_USBMOUSE &&

@@ -2,8 +2,8 @@
 
 function subir 
 {
-rsync -avz arch/arm/boot/uImage 192.168.1.173:/boot
-rsync -avz ../modules/lib/modules/3.0.35* 192.168.1.173:/lib/modules
+rsync -avz arch/arm/boot/uImage 192.168.1.155:/boot
+rsync -avz ../modules/lib/modules/3.0.35* 192.168.1.155:/lib/modules
 exit
 }
 

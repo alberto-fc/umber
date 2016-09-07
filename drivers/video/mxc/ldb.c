@@ -104,7 +104,7 @@ struct ldb_data {
 static int g_ldb_mode;
 
 static struct fb_videomode ldb_modedb[] = {
-	{
+	/*{
 	 "LDB-WXGA", 60, 1280, 800, 14065,
 	 40, 40,
 	 10, 3,
@@ -119,7 +119,7 @@ static struct fb_videomode ldb_modedb[] = {
 	 60, 10,
 	 0,
 	 FB_VMODE_NONINTERLACED,
-	 FB_MODE_IS_DETAILED,},
+	 FB_MODE_IS_DETAILED,},*/
 	{
 	 "LDB-1080P60", 60, 1920, 1080, 7692,
 	 100, 40,
@@ -128,6 +128,17 @@ static struct fb_videomode ldb_modedb[] = {
 	 0,
 	 FB_VMODE_NONINTERLACED,
 	 FB_MODE_IS_DETAILED,},
+        {
+         "LDB-Fusion10", 62, 1024, 600, 20833,
+         .left_margin = 104,
+         .right_margin = 43,
+         .hsync_len = 5,
+         .upper_margin = 24,
+         .lower_margin = 20,
+         .vsync_len = 5,
+         .sync = 0,
+         .vmode = FB_VMODE_NONINTERLACED,
+         .flag = FB_MODE_IS_DETAILED,},
 };
 static int ldb_modedb_sz = ARRAY_SIZE(ldb_modedb);
 

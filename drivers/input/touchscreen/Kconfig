@@ -841,3 +841,4 @@ config TOUCHSCREEN_AR1010_UART
 	  module will be called mchpar1xxx.
 
 endif
+

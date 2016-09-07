@@ -658,6 +658,9 @@ static const struct hid_device_id mt_devices[] = {
 	{ .driver_data = MT_CLS_EGALAX,
 		HID_USB_DEVICE(USB_VENDOR_ID_DWAV,
 			USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_A001) },
+        { .driver_data = MT_CLS_EGALAX,
+                HID_USB_DEVICE(USB_VENDOR_ID_DWAV,
+                        USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_C000) },
 
 	/* Elo TouchSystems IntelliTouch Plus panel */
 	{ .driver_data = MT_CLS_DUAL_NSMU_CONTACTID,

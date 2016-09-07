@@ -57,7 +57,19 @@ int __init edm_setup_external_gpio(void) {
 			gpio_request(edm_external_gpio[i], name);
 			gpio_export(edm_external_gpio[i], true);		
 			gpio_export_link(edm_gpio, edm_gpio_pin_name[i], edm_external_gpio[i]);
-                }
+
+			if ( strncmp(edm_gpio_pin_name[i], "pin259", 6) == 0 )
+			{
+				printk(KERN_INFO "SIDE PWR\n");
+				gpio_direction_output(edm_external_gpio[i], 1);
+			}
+
+                        if ( strncmp(edm_gpio_pin_name[i], "pin264", 6) == 0 )
+                        {
+                                printk(KERN_INFO "SIDE USB PWR\n");
+                                gpio_direction_output(edm_external_gpio[i], 1);
+                        }
+		}
 	}
         return 0;
 }

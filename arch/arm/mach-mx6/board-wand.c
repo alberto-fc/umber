@@ -30,9 +30,12 @@
 #include <linux/kernel.h>
 #include <linux/memblock.h>
 #include <linux/phy.h>
+#include <linux/pwm.h>
+#include <linux/pwm_backlight.h>
+#include <linux/input/fusion_F0710A.h>
 
 #include <mach/ahci_sata.h>
-#include <mach/common.h>
+#include <mach/common.h> 
 #include <mach/devices-common.h>
 #include <mach/gpio.h>
 #include <mach/iomux-mx6dl.h>
@@ -162,6 +165,17 @@ static void wand_init_sd(void) {
 	}
 }
 
+static int pcap_mux_fusion(void)
+{
+	//No used right now
+	return 0;
+}
+
+static struct fusion_f0710a_init_data fusion_f0710a_data = {
+	.pinmux_fusion_pins = &pcap_mux_fusion,
+	.gpio_int = IMX_GPIO_NR(1, 9), 	/* WAND_USB_OTG_OC GPIO_9 */
+	.gpio_reset = IMX_GPIO_NR(2, 9),	/* LVDS0_BLT_CTRL SD4_DAT1*/
+};
 
 /****************************************************************************
  *                                                                          
@@ -176,6 +190,18 @@ static struct i2c_board_info mxc_i2c2_board_info[] = {
         },
         {
                 I2C_BOARD_INFO("pcf8563", 0x51),
+        },
+        /*{
+                I2C_BOARD_INFO("Goodix-TS", 0x14),
+                .irq = gpio_to_irq(IMX_GPIO_NR(2, 8)),
+        },*/
+/*        {
+                I2C_BOARD_INFO("fusion_F0710A", 0x10),
+                .irq = gpio_to_irq(IMX_GPIO_NR(1, 9)),
+        },*/
+        {
+                I2C_BOARD_INFO("fusion_F0710A", 0x10),
+                .platform_data = &fusion_f0710a_data,
         },
 };
 
@@ -449,16 +475,17 @@ static void wand_usbotg_vbus(bool on) {
 /* ------------------------------------------------------------------------ */
 
 static __init void wand_init_usb(void) {
-        IMX6_SETUP_PAD( GPIO_9__GPIO_1_9 );
-        // Alberto: We need the OTG_ID pin as GPIO, so assigned to
-        // ENET_RX_ER pin (unused)
+	IMX6_SETUP_PAD( GPIO_9__GPIO_1_9 );
+	// Alberto: We need the OTG_ID pin as GPIO, so assigned to
+	// ENET_RX_ER pin (unused)
 	IMX6_SETUP_PAD( ENET_RX_ER__ANATOP_USBOTG_ID );
-        //IMX6_SETUP_PAD( GPIO_1__USBOTG_ID );
-        IMX6_SETUP_PAD( EIM_D22__GPIO_3_22 );
-        IMX6_SETUP_PAD( EIM_D30__GPIO_3_30 );
-        
-        gpio_request(WAND_USB_OTG_OC, "otg oc");
-	gpio_direction_input(WAND_USB_OTG_OC);
+	//IMX6_SETUP_PAD( GPIO_1__USBOTG_ID );
+	IMX6_SETUP_PAD( EIM_D22__GPIO_3_22 );
+	IMX6_SETUP_PAD( EIM_D30__GPIO_3_30 );
+	
+	//USED BY PCAP INT
+	//gpio_request(WAND_USB_OTG_OC, "otg oc");
+	//gpio_direction_input(WAND_USB_OTG_OC);
 
 	/* USB host power is n.c on Wand baseboard */
 	gpio_request(WAND_USB_HOST_PWR_EN, "host pwr");
@@ -565,26 +592,43 @@ static void wand_init_hdmi(void) {
  *                                                                          
  ****************************************************************************/
 
-static struct fsl_mxc_lcd_platform_data wand_lcdif_data = {
+/*static struct fsl_mxc_lcd_platform_data wand_lcdif_data = {
 	.ipu_id = 0,
 	.disp_id = 0,
 	.default_ifmt = IPU_PIX_FMT_RGB666,
+};*/
+
+static struct fsl_mxc_lcd_platform_data lcdif_data = {
+	.ipu_id = 0,
+	.disp_id = 0,
+	.default_ifmt = IPU_PIX_FMT_RGB565,
+	//.enable_pins = lcd_enable_pins,
+	//.disable_pins = lcd_disable_pins,
 };
 
 /* ------------------------------------------------------------------------ */
 
-static struct fsl_mxc_ldb_platform_data wand_ldb_data = {
+/*static struct fsl_mxc_ldb_platform_data wand_ldb_data = {
 	.ipu_id = 0,
 	.disp_id = 0,
 	.ext_ref = 1,
 	.mode = LDB_SIN0,
 	.sec_ipu_id = 0,
 	.sec_disp_id = 1,
+};*/
+
+static struct fsl_mxc_ldb_platform_data ldb_data = {
+	.ipu_id = 1,
+	.disp_id = 0,
+	.ext_ref = 1,
+	.mode = LDB_SEP0,
+	.sec_ipu_id = 1,
+	.sec_disp_id = 1,
 };
 
 /* ------------------------------------------------------------------------ */
 
-static struct ipuv3_fb_platform_data wand_lvds_fb[] = {
+/*static struct ipuv3_fb_platform_data wand_lvds_fb[] = {
 	{
 		.disp_dev = "ldb",
 		.interface_pix_fmt = IPU_PIX_FMT_RGB24,
@@ -592,7 +636,33 @@ static struct ipuv3_fb_platform_data wand_lvds_fb[] = {
 		.default_bpp = 24,
 		.int_clk = false,
 	},
+};*/
+
+static struct ipuv3_fb_platform_data fb_data[] = {
+	{
+		.disp_dev = "ldb",
+		.interface_pix_fmt = IPU_PIX_FMT_RGB666,
+		.mode_str = "LDB-Fusion10",
+		.default_bpp = 16,
+		.int_clk = false,
+	},
 };
+
+int bl_notify(struct device *dev, int brightness)
+{
+	pr_info("%s: brightness=%d\n", __func__, brightness);
+	return brightness;
+}
+
+/* PWM4_PWMO: backlight control on LDB connector */
+static struct platform_pwm_backlight_data pwm4_backlight_data = {
+	.pwm_id = 3, /* pin SD4_DAT2 - PWM4 */
+	.max_brightness = 256,
+	.dft_brightness = 256,
+	.pwm_period_ns = 50000,
+	.notify = bl_notify,
+};
+
 
 /* ------------------------------------------------------------------------ */
 
@@ -632,7 +702,8 @@ static void __init wand_init_lcd(void) {
 	/* LVDS */
 	IMX6_SETUP_PAD( SD4_DAT0__GPIO_2_8 );
 	IMX6_SETUP_PAD( SD4_DAT1__GPIO_2_9 );
-	IMX6_SETUP_PAD( SD4_DAT2__GPIO_2_10 );
+	//IMX6_SETUP_PAD( SD4_DAT2__GPIO_2_10 );
+	IMX6_SETUP_PAD( SD4_DAT2__PWM4_PWMO );
 	IMX6_SETUP_PAD( SD4_DAT3__GPIO_2_11 );
         
 	IMX6_SETUP_PAD( LVDS0_CLK_P__LDB_LVDS0_CLK );
@@ -643,22 +714,27 @@ static void __init wand_init_lcd(void) {
 
 	//gpio_request(IMX_GPIO_NR(2, 8), "lvds0_en");
 	//gpio_direction_output(IMX_GPIO_NR(2, 8), 1);
-        
-	gpio_request(IMX_GPIO_NR(2, 9), "lvds0_blt_ctrl");
-	gpio_direction_output(IMX_GPIO_NR(2, 9), 1);
+    
+  //RESET FUSION PCAP    
+	//gpio_request(IMX_GPIO_NR(2, 9), "lvds0_blt_ctrl");
+	//gpio_direction_output(IMX_GPIO_NR(2, 9), 0);
 
-	gpio_request(IMX_GPIO_NR(2, 10), "disp0_bklen");
-	gpio_direction_output(IMX_GPIO_NR(2, 10), 1);
+	//PWM4 control this GPIO
+	//gpio_request(IMX_GPIO_NR(2, 10), "disp0_bklen");
+	//gpio_direction_output(IMX_GPIO_NR(2, 10), 1);
 
 	gpio_request(IMX_GPIO_NR(2, 11), "disp0_vdden");
 	gpio_direction_output(IMX_GPIO_NR(2, 11), 1);
 
 	imx6q_add_vdoa();
 
-	imx6q_add_ldb(&wand_ldb_data);
-	imx6q_add_lcdif(&wand_lcdif_data);
+	//imx6q_add_ldb(&wand_ldb_data);
+	imx6q_add_ldb(&ldb_data);
+	//imx6q_add_lcdif(&wand_lcdif_data);
+	imx6q_add_lcdif(&lcdif_data);
 
-	imx6q_add_ipuv3fb(1, &wand_lvds_fb[0]);
+	//imx6q_add_ipuv3fb(1, &wand_lvds_fb[0]);
+	imx6q_add_ipuv3fb(1, &fb_data[0]);
 }
 
 
@@ -1099,9 +1175,9 @@ static void __init wand_init_edm(void) {
 	edm_external_gpio[7] = IMX_GPIO_NR(1, 24);
 	edm_external_gpio[8] = IMX_GPIO_NR(4, 5);
 	edm_external_gpio[9] = IMX_GPIO_NR(7, 8);
-        edm_external_gpio[10] = IMX_GPIO_NR(1, 1);
-
-        gpio_direction_output(BUZZER, 0);
+	edm_external_gpio[10] = IMX_GPIO_NR(1, 1);
+	
+	gpio_direction_output(BUZZER, 0);
 
 	edm_i2c[0] = 0;
 	edm_i2c[1] = 1;
@@ -1185,6 +1261,10 @@ static void __init wand_board_init(void) {
 	wand_init_usb();
 	wand_init_ipu();
 	wand_init_hdmi();
+	
+	imx6q_add_mxc_pwm(3);
+	imx6q_add_mxc_pwm_backlight(3, &pwm4_backlight_data);
+	
 	wand_init_lcd();
 
 //FIXME: Change this code from this to a fuction
